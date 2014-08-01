@@ -28,9 +28,45 @@ namespace pblib.NET
 			return false;
 		}
 
+        public bool renew(string apiKey, string apiSecret)
+        {
+            apiKeyParam = "?api_key=" + apiKey;
+            var param = "api_key=" + apiKey + "&api_secret=" + apiSecret;
+            dynamic result = JsonToDynamic(call("Auth/renew", param));
+            if ((bool)result.success)
+            {
+                token = result.response.token;
+                Debug.Assert(!string.IsNullOrEmpty(token));
+                return true;
+            }
+            return false;
+        }
+
+
+
 		public string player(string playerId)
 		{
 			return call("Player/" + playerId, "token=" + token);
+		}
+
+		/// <summary>
+		/// Get detail of list player
+		/// </summary>
+		/// <param name="playerListId">player id as used in client's website separate with ',' example '1,2,3'</param>
+		/// <returns></returns>
+		public string playerList(string playerListId)
+		{
+			return call("Player/list", "token=" + token + "&list_player_id=" + playerListId);
+		}
+		
+		/// <summary>
+		/// Get detailed information about a player, including points and badges
+		/// </summary>
+		/// <param name="playerId"></param>
+		/// <returns></returns>
+		public string playerDetail(string playerId)
+		{
+			return call("Player/" + playerId + "/data/all", "token=" + token);
 		}
 
 		/// <summary>
@@ -168,6 +204,15 @@ namespace pblib.NET
 			return call("Player/" + playerId + "/point/" + pointName + apiKeyParam);
 		}
 
+        public string pointHistory(string playerId, string pointName=null, int offset=0, int limit=20)
+        {
+            string stringQuery = "&offset=" + offset + "&limit=" + limit;
+            if(pointName != null){
+                stringQuery=stringQuery+"&point_name"+pointName;
+            }
+            return call("Player/" + playerId + "/point_history" + apiKeyParam + stringQuery);
+        }
+
 		public string actionLastPerformed(string playerId)
 		{
 			return call("Player/" + playerId + "/action/time" + apiKeyParam);
@@ -198,6 +243,41 @@ namespace pblib.NET
 			return call("Player/ranks/" + limit.ToString() + apiKeyParam);
 		}
 
+        public string level(int level)
+        {
+            return call("Player/level/" + level.ToString() + apiKeyParam);
+        }
+
+        public string levels()
+        {
+            return call("Player/levels" + apiKeyParam);
+        }
+
+        public string claimBadge(string playerId, string badgeId)
+        {
+            return call("Player/" + playerId + "/badge/" + badgeId + "/claim", "token=" + token);
+        }
+
+        public string redeemBadge(string playerId, string badgeId)
+        {
+            return call("Player/" + playerId + "/badge/" + badgeId + "/redeem", "token=" + token);
+        }
+
+        public string goodsOwned(string playerId)
+        {
+            return call("Player/" + playerId + "/goods" + apiKeyParam);
+        }
+
+        public string questOfPlayer(string playerId, string questId)
+        {
+            return call("Player/quest/" + questId + apiKeyParam + "&player_id=" + playerId);
+        }
+
+        public string questListOfPlayer(string playerId)
+        {
+            return call("Player/quest" + apiKeyParam + "&player_id=" + playerId);
+        }
+
 		public string badges()
 		{
 			return call("Badge" + apiKeyParam);
@@ -208,15 +288,15 @@ namespace pblib.NET
 			return call("Badge/" + badgeId + apiKeyParam);
 		}
 
-		public string badgeCollections()
-		{
-			return call("Badge/collection" + apiKeyParam);
-		}
+        public string goods(string goodsId)
+        {
+            return call("Goods/" + goodsId + apiKeyParam);
+        }
 
-		public string badgeCollection(string collectionId)
-		{
-			return call("Badge/collection/" + collectionId + apiKeyParam);
-		}
+        public string goodsList()
+        {
+            return call("Goods" + apiKeyParam);
+        }
 
 		public string actionConfig()
 		{
@@ -265,6 +345,106 @@ namespace pblib.NET
 
 			call_async("Engine/rule", param.ToString(), onComplete);
 		}
+
+        public string quest(string questId)
+        {
+            return call("Quest/" + questId + apiKeyParam);
+        }
+
+        public string quests()
+        {
+            return call("Quest" + apiKeyParam);
+        }
+
+        public string mission(string questId, string missionId)
+        {
+            return call("Quest/" + questId + "/mission/" + missionId + apiKeyParam);
+        }
+
+        public string questAvailable(string questId, string playerId)
+        {
+            return call("Quest/" + questId + "/available/" + apiKeyParam + "&player_id=" + playerId);
+        }
+
+        public string questsAvailable(string playerId)
+        {
+            return call("Quest/available" + apiKeyParam + "&player_id=" + playerId);
+        }
+
+        public string joinQuest(string questId, string playerId)
+        {
+            var param = new StringBuilder();
+            param.Append("token=");
+            param.Append(token);
+            param.Append("&player_id=");
+            param.Append(playerId);
+            return call("Quest/" + questId + "/join", param.ToString());
+        }
+        public void joinQuest_async(string questId, string playerId, UploadStringCompletedEventHandler onComplete = null)
+        {
+            var param = new StringBuilder();
+            param.Append("token=");
+            param.Append(token);
+            param.Append("&player_id=");
+            param.Append(playerId);
+            call_async("Quest/" + questId + "/join", param.ToString(), onComplete);
+        }
+
+        public string cancelQuest(string questId, string playerId)
+        {
+            var param = new StringBuilder();
+            param.Append("token=");
+            param.Append(token);
+            param.Append("&player_id=");
+            param.Append(playerId);
+            return call("Quest/" + questId + "/cancel", param.ToString());
+        }
+        public void cancelQuest_async(string questId, string playerId, UploadStringCompletedEventHandler onComplete = null)
+        {
+            var param = new StringBuilder();
+            param.Append("token=");
+            param.Append(token);
+            param.Append("&player_id=");
+            param.Append(playerId);
+            call_async("Quest/" + questId + "/cancel", param.ToString(), onComplete);
+        }
+
+        public string redeemGoods(string goodsId, string playerId, int amount = 1)
+        {
+            var param = new StringBuilder();
+            param.Append("token=");
+            param.Append(token);
+            param.Append("&goods_id=");
+            param.Append(goodsId);
+            param.Append("&player_id=");
+            param.Append(playerId);
+            param.Append("&amount=");
+            param.Append(amount);
+            return call("Redeem/goods", param.ToString());
+        }
+        public void redeemGoods_async(string goodsId, string playerId, int amount = 1, UploadStringCompletedEventHandler onComplete = null)
+        {
+            var param = new StringBuilder();
+            param.Append("token=");
+            param.Append(token);
+            param.Append("&goods_id=");
+            param.Append(goodsId);
+            param.Append("&player_id=");
+            param.Append(playerId);
+            param.Append("&amount=");
+            param.Append(amount);
+            call_async("Redeem/goods", param.ToString(), onComplete);
+        }
+
+        public string recentPoint(int offset=0, int limit=10)
+        {
+            return call("Service/recent_point" + apiKeyParam + "&offset=" + offset.ToString() + "&limit=" + limit.ToString());
+        }
+
+        public string recentPointByName(string pointName, int offset = 0, int limit = 10)
+        {
+            return call("Service/recent_point" + apiKeyParam + "&offset=" + offset.ToString() + "&limit=" + limit.ToString() + "&point_name=" + pointName);
+        }
 
 		public static string call(string address, string data = null)
 		{
